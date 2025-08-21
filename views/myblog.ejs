@@ -1,8 +1,13 @@
 <%- include("partials/header.ejs") %>
-<h1> <%-locals.blogName%></h1>
 
-<p>
-    <%-locals.text%> <br>
-    <strong>author: <%-locals.name%></strong>
-</p>
+<h1>Все статьи</h1>
+<% blogs.forEach(blog => { %>
+  <div>
+    <h2><%= blog.blogCaption %></h2>
+    <p><%= blog.blogText %></p>
+    <small>Автор: <%= blog.author %></small>
+  </div>
+  <hr>
+<% }) %>
 <%- include("partials/footer.ejs") %>
+

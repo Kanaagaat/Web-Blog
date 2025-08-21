@@ -1,101 +1,155 @@
 import express from "express";
-import fs from "fs"
+import { read } from "fs";
+import { readFile, writeFile, appendFile } from 'fs/promises';
 
 
-
-function fileCreate(name, dataName ,data){
-
-    const article ={
-        author: name, 
-        caption: dataName,
-        textInfo: data
-    };
-
-    const jsonData = JSON.stringify(article, null, 2); // The 'null, 2' arguments add pretty-printing (indentation)
-
-    fs.writeFile(`blogPost/${name}.json`, jsonData, 'utf8', (err) => {
-        if(err){
-            throw err;
-            return;
-        }
-
-        console.log("File written succesfully");
-    })
-
-}
-
-function postCreate(){
-    const testFolder = 'blogPost';
-
-    const posts =   fs.readdir(testFolder);
-    console.log(posts);
-
-
-
-
-
-
-};
 const app = express();
 const port = 3000;
 
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 
-app.get(('/'), (req, res) => {
-    res.render("home.ejs");
-});
-app.get(('/posts'), (req, res) => {
-    res.render("posts.ejs");
-});
+async function blogSave(author, blogCap, blogText){
+   
+    try{
+        
+        let exData = await readFile("blogPost/data.json", "utf-8");
+        let blogArray = exData ? JSON.parse(exData) : [];
+
+        // новый объект
+        const blogBody = {
+          author: author,
+          blogCaption: blogCap,
+          blogText: blogText,
+          };
+
+        // добавляем его в массив
+        blogArray.push(blogBody);
+
+        // сохраняем
+        await writeFile("blogPost/data.json", JSON.stringify(blogArray, null, 2), "utf-8");
+
+        console.log("Blog saved ✅");
 
 
-app.post("/posts", (req, res) => {
-    console.log(req.body);
-    var authorName = req.body.name;
-    var authorBlogName = req.body.blogName;
-    var authorText = req.body.text;
+    } catch(err){
+        console.log(err);
+    }
 
-    fileCreate(authorName, authorBlogName, authorText);
-    postCreate();
-    res.render("myBlog.ejs", {
-        name: req.body.name,
-        blogName: req.body.blogName,
-        text:  req.body.text,
 
+
+
+
+
+}
+
+async function existBlogs(){
+  let data = await readFile("blogPost/data.json", "utf-8");
+  let blogArray = data ? JSON.parse(data) : []; 
+
+  return blogArray;
+
+}
+
+async function deleteBlog(blogName){
+
+  let data = await existBlogs();
+
+  data = data.filter(e => e.blogCaption !== blogName);
+  
+
+  await writeFile("blogPost/data.json", JSON.stringify(data, null, 2), "utf-8");
+
+
+}
+
+async function editBlog(oldE, newE, option) {
+    let data = await existBlogs(); // data — это массив объектов
+
+    let updated = false; // чтобы проверить, было ли изменение
+
+    data.forEach(element => {
+        if (option === "title" && element.blogCaption === oldE) {
+            element.blogCaption = newE;
+            updated = true;
+        }
+        else if (option === "author" && element.author === oldE) {
+            element.author = newE;
+            updated = true;
+        }
+        else if (option === "text" && element.blogText === oldE) {
+            element.blogText = newE;
+            updated = true;
+        }
     });
-});
 
-app.get("/myBlog", (req, res) => {
+    if (updated) {
+        await writeFile("blogPost/data.json", JSON.stringify(data, null, 2), "utf-8");
+        console.log("✅ Blog updated successfully");
+    } else {
+        console.log("⚠️ Nothing was updated. Check your old value.");
+    }
+}
 
-    var data =  postCreate();
-    // fs.readFile(`blogPost/${blogFiles[1]}`, function(err, data) { 
-    //     if (err) throw err; 
 
-    //     const books = JSON.parse(data); 
-    //     console.log(books); 
-    // }); 
-    
-
-    res.render("myBlog.ejs", {
-        name: authorName,
-        blogName: authorBlogName,
-        text: authorText,
-
-    });
+app.get("/", (req, res) => {
+  res.render("home.ejs");
 })
 
-app.listen(port, ()=> {
-    console.log(`Server is runing on port ${port}`);
+app.get("/posts", (req, res) => {
+  res.render("posts.ejs");
+})
+
+app.post("/posts", async (req,res) => {
+    
+    res.render("posted.ejs",{
+      name: req.body.name,
+      blogName: req.body.blogName,
+      text: req.body.text,
+    });
+   await blogSave(req.body.name,req.body.blogName,req.body.text)
+    
+
+   
+})
+
+
+app.get("/myblog", async (req, res) => {
+  
+    let exData = await readFile("blogPost/data.json", "utf-8");
+    let blogArray = exData ? JSON.parse(exData) : [];
+    res.render("myblog.ejs", { blogs: blogArray });
+
+})
+
+app.get("/edit", (req, res) => {
+  res.render("edit.ejs");
+})
+
+app.post("/edit", async (req,res) => {
+  let option = req.body.editOption;
+  let oldEdit = req.body.oldEdit;
+  let newEdit = req.body.newEdit;
+
+  await editBlog(oldEdit, newEdit, option)
+  res.render("success.ejs")
+
+
+  console.log(req.body);
+
+})
+
+app.get("/delete", (req,res) => {
+  res.render("delete.ejs");
+})
+
+app.post("/delete", async (req,res) => {
+  console.log(req.body)
+  await deleteBlog(req.body.deleteEdit)
+  res.render("success.ejs");
+})
+
+app.listen(port, () => {
+  console.log(`🚀 Server is running on http://localhost:${port}`);
 });
-
-
-// Features
-// 1. Post Creation: Users should be able to create new posts.
-
-// 2. Post Viewing: The home page should allow the user to view all their posts.
-
-// 3. Post Update/Delete: Users should be edit and delete posts as needed.
-
-// 3. Styling: The application should be well-styled and responsive, ensuring a good user experience on both desktop and mobile devices.
