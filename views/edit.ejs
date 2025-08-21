@@ -1,0 +1,52 @@
+<%- include("partials/header.ejs") %>
+
+
+
+<form method="POST">
+    <div style ="display: flex; flex-direction: column;">
+    <h1>Old</h1><br>
+     
+
+    <input name="oldEdit" type="text" style="color: black;" class="feedback-input" placeholder="Author/Title/Text" />
+
+    <h1>New</h1><br>
+     
+
+    <input name="newEdit" type="text" style="color: black;" class="feedback-input" placeholder="Author/Title/Text" />
+
+    <fieldset style="margin:10px">
+  <legend>Choose what to edit</legend>
+  <div>
+    <input 
+      type="radio"
+      id="author"
+      name="editOption"
+      value="author"
+      checked />
+    <label for="author" style="margin-right:10px">Author</label>
+
+    <input 
+      type="radio" 
+      id="title" 
+      name="editOption" 
+      value="title" />
+    <label for="title" style="margin-right:10px">Title Name</label>
+
+    <input
+      type="radio"
+      id="text"
+      name="editOption"
+      value="text" />
+    <label for="text" style="margin-right:10px">Blog Text</label>
+  </div>
+    </fieldset>
+
+
+    <input type="submit" value="SUBMIT" />
+    
+    </div>
+</form>
+
+
+
+<%- include("partials/footer.ejs") %>
