@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "author": "kanagat",
+    "blogCaption": "My name is Kanagat",
+    "blogText": "Lipsum asfjklbdlfh dljkfghaldkjfgh lfgha "
+  },
+  {
+    "author": "kanskii",
+    "blogCaption": " What is Lorem Ipsum?",
+    "blogText": "asdfsdf adgdf"
+  },
+  {
+    "author": "kanskii",
+    "blogCaption": " What is Lorem Ipsumafdfasfasdf?",
+    "blogText": "asdfsdf adgdf"
+  },
+  {
+    "author": "Kanagat Sauranbaysfdasdfd",
+    "blogCaption": " What is Lorem Ipsumafdfasfasdf?",
+    "blogText": "asdfsdf adgdfsfasdfgsdf"
+  }
+]

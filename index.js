@@ -1,7 +1,7 @@
 import express from "express";
 import { read } from "fs";
 import { readFile, writeFile, appendFile } from 'fs/promises';
-
+import { Client } from 'pg'
 
 const app = express();
 const port = 3000;
@@ -10,27 +10,26 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 
+const client = new Client({
+  user: "postgres",
+  host: "localhost",
+  database: "blogdb",
+  password: "1234",
+  port: "5432",
+});
+
+await client.connect();
+
+
+
 async function blogSave(author, blogCap, blogText){
    
     try{
         
-        let exData = await readFile("blogPost/data.json", "utf-8");
-        let blogArray = exData ? JSON.parse(exData) : [];
-
-        // новый объект
-        const blogBody = {
-          author: author,
-          blogCaption: blogCap,
-          blogText: blogText,
-          };
-
-        // добавляем его в массив
-        blogArray.push(blogBody);
-
-        // сохраняем
-        await writeFile("blogPost/data.json", JSON.stringify(blogArray, null, 2), "utf-8");
-
-        console.log("Blog saved ✅");
+        await client.query(
+          "INSERT INTO blogs (author, blog_caption, blog_text) VALUES ($1, $2, $3)",
+          [author, blogCap, blogText]);
+        console.log("Blog Saved");
 
 
     } catch(err){
@@ -38,58 +37,42 @@ async function blogSave(author, blogCap, blogText){
     }
 
 
-
-
-
-
 }
 
 async function existBlogs(){
-  let data = await readFile("blogPost/data.json", "utf-8");
-  let blogArray = data ? JSON.parse(data) : []; 
+  const result = await client.query("SELECT * FROM blogs ORDER BY id DESC");
 
-  return blogArray;
+  return result.rows;
 
 }
 
-async function deleteBlog(blogName){
+async function deleteBlog(id){
 
-  let data = await existBlogs();
+  await client.query("DELETE FROM blogs WHERE id = $1", [id]);
 
-  data = data.filter(e => e.blogCaption !== blogName);
+}
+
+
+
+async function editBlog(id, newE, option) {
+   
+  let column;
   
+  if (option === "title") column = "blog_caption";
+  else if (option === "author") column = "author";
+  else if (option === "text") column = "blog_text";
 
-  await writeFile("blogPost/data.json", JSON.stringify(data, null, 2), "utf-8");
+  const result  = client.query(`UPDATE blogs SET ${column} = $1 WHERE id = $2`, [newE, id]);
 
 
-}
-
-async function editBlog(oldE, newE, option) {
-    let data = await existBlogs(); // data — это массив объектов
-
-    let updated = false; // чтобы проверить, было ли изменение
-
-    data.forEach(element => {
-        if (option === "title" && element.blogCaption === oldE) {
-            element.blogCaption = newE;
-            updated = true;
-        }
-        else if (option === "author" && element.author === oldE) {
-            element.author = newE;
-            updated = true;
-        }
-        else if (option === "text" && element.blogText === oldE) {
-            element.blogText = newE;
-            updated = true;
-        }
-    });
-
-    if (updated) {
-        await writeFile("blogPost/data.json", JSON.stringify(data, null, 2), "utf-8");
-        console.log("✅ Blog updated successfully");
-    } else {
-        console.log("⚠️ Nothing was updated. Check your old value.");
-    }
+  if(result.rowCount > 0){
+    console.log("Blog Updated");
+  }
+  else{
+    console.log("Nothing was updated");
+  }
+  
+    
 }
 
 
@@ -117,9 +100,9 @@ app.post("/posts", async (req,res) => {
 
 app.get("/myblog", async (req, res) => {
   
-    let exData = await readFile("blogPost/data.json", "utf-8");
-    let blogArray = exData ? JSON.parse(exData) : [];
-    res.render("myblog.ejs", { blogs: blogArray });
+    const blogs = await existBlogs();
+    console.log(blogs);
+    res.render("myblog.ejs", {blogs});
 
 })
 
@@ -129,10 +112,10 @@ app.get("/edit", (req, res) => {
 
 app.post("/edit", async (req,res) => {
   let option = req.body.editOption;
-  let oldEdit = req.body.oldEdit;
+  let id = req.body.id;
   let newEdit = req.body.newEdit;
 
-  await editBlog(oldEdit, newEdit, option)
+  await editBlog(id, newEdit, option)
   res.render("success.ejs")
 
 

@@ -3,9 +3,10 @@
 <h1>Все статьи</h1>
 <% blogs.forEach(blog => { %>
   <div>
-    <h2><%= blog.blogCaption %></h2>
-    <p><%= blog.blogText %></p>
-    <small>Автор: <%= blog.author %></small>
+    <h2><%= blog.blog_caption %></h2>
+    <p><%= blog.blog_text %></p>
+    <small>Автор: <%= blog.author %></small><br>
+    <small>ID: <%= blog.id %></small>
   </div>
   <hr>
 <% }) %>
